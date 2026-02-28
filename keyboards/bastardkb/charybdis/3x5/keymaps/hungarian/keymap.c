@@ -228,7 +228,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     charybdis_set_pointer_sniping_enabled(layer_state_cmp(state, CHARYBDIS_AUTO_SNIPING_ON_LAYER));
 #    endif
     // Hold LAYER_NAVIGATION + LAYER_SYMBOLS simultaneously → LAYER_HUNGARIAN
-    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_SYMBOLS, LAYER_HUNGARIAN);
+    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_NUMERAL, LAYER_HUNGARIAN);
     return state;
 }
 
@@ -236,7 +236,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 // Without pointing device, still need tri-layer
 layer_state_t layer_state_set_user(layer_state_t state) {
-    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_SYMBOLS, LAYER_HUNGARIAN);
+    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_NUMERAL, LAYER_HUNGARIAN);
     return state;
 }
 
