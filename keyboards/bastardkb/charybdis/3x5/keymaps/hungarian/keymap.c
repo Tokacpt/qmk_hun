@@ -3,7 +3,8 @@
  * Based on the vendor keymap with an added Hungarian layer.
  *
  * HOW TO TYPE HUNGARIAN:
- *   Hold LEFT MIDDLE THUMB (Space/Nav) + RIGHT INNER THUMB (Enter/Sym) simultaneously
+ *   Hold TAB (left inner thumb) to enter Function layer
+ *   Then hold Z (bottom left) to activate Hungarian layer
  *   Then tap:
  *     A=á, E=é, I=í, O=ó, U=ú
  *     S=ö, D=ő, J=ü, K=ű
@@ -11,7 +12,6 @@
  *     B = UC_NEXT (cycle Unicode mode: Windows → Linux → macOS)
  *
  *   On Windows: WinCompose must be running (set it to start with Windows).
- *   Default mode is WinCompose (Windows). Tap B in Hungarian layer to switch.
  */
 #include QMK_KEYBOARD_H
 
@@ -86,7 +86,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-// ── Layer definitions (vendor, unchanged) ────────────────────────────────────
+// ── Layer definitions ─────────────────────────────────────────────────────────
 
 #define LAYOUT_LAYER_BASE                                                                     \
        KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, \
@@ -98,10 +98,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define ______________HOME_ROW_GACS_L______________ KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX
 #define ______________HOME_ROW_GACS_R______________ XXXXXXX, KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI
 
+// Z position (bottom left) = MO(LAYER_HUNGARIAN)
 #define LAYOUT_LAYER_FUNCTION                                                                 \
     _______________DEAD_HALF_ROW_______________, KC_PSCR,   KC_F7,   KC_F8,   KC_F9,  KC_F12, \
     ______________HOME_ROW_GACS_L______________, KC_SCRL,   KC_F4,   KC_F5,   KC_F6,  KC_F11, \
-    _______________DEAD_HALF_ROW_______________, KC_PAUS,   KC_F1,   KC_F2,   KC_F3,  KC_F10, \
+    MO(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, KC_PAUS, KC_F1,  KC_F2,   KC_F3,  KC_F10, \
                       XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX
 
 #define LAYOUT_LAYER_MEDIA                                                                    \
@@ -134,15 +135,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     KC_TILD, KC_EXLM,   KC_AT, KC_HASH, KC_PIPE, _______________DEAD_HALF_ROW_______________, \
                       KC_LPRN, KC_RPRN, KC_UNDS, _______, XXXXXXX
 
-// ── Hungarian layer ───────────────────────────────────────────────────────────
-// Activated by holding SPC_NAV + ENT_SYM simultaneously (tri-layer)
 #define LAYOUT_LAYER_HUNGARIAN                                                                \
     XXXXXXX, XXXXXXX,  HUN_E, XXXXXXX, XXXXXXX, XXXXXXX,  HUN_U,  HUN_I,  HUN_O, XXXXXXX,  \
      HUN_A,  HUN_OE,  HUN_OX, XXXXXXX, XXXXXXX, XXXXXXX, HUN_UE, HUN_UX, XXXXXXX, XXXXXXX, \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, UC_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
                       _______, _______, _______, _______, _______
 
-// ── Home row mod and pointer mod macros (unchanged) ───────────────────────────
+// ── Home row mod and pointer mod macros ──────────────────────────────────────
 
 #define _HOME_ROW_MOD_GACS(                                            \
     L00, L01, L02, L03, L04, R05, R06, R07, R08, R09,                  \
@@ -190,9 +189,6 @@ void keyboard_post_init_user(void) {
     set_unicode_input_mode(UNICODE_MODE_WINCOMPOSE);
 }
 
-// ── Tri-layer: hold SPC_NAV + ENT_SYM → Hungarian ────────────────────────────
-// Note: also merged with sniping layer state handler below.
-
 // ── Pointing device ───────────────────────────────────────────────────────────
 
 #ifdef POINTING_DEVICE_ENABLE
@@ -222,24 +218,12 @@ void matrix_scan_user(void) {
 }
 #    endif // CHARYBDIS_AUTO_POINTER_LAYER_TRIGGER_ENABLE
 
-// Merged: sniping auto-enable + tri-layer for Hungarian
 layer_state_t layer_state_set_user(layer_state_t state) {
 #    ifdef CHARYBDIS_AUTO_SNIPING_ON_LAYER
     charybdis_set_pointer_sniping_enabled(layer_state_cmp(state, CHARYBDIS_AUTO_SNIPING_ON_LAYER));
 #    endif
-    // Hold LAYER_NAVIGATION + LAYER_SYMBOLS simultaneously → LAYER_HUNGARIAN
-    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_NUMERAL, LAYER_HUNGARIAN);
     return state;
 }
-
-#else // no POINTING_DEVICE_ENABLE
-
-// Without pointing device, still need tri-layer
-layer_state_t layer_state_set_user(layer_state_t state) {
-    state = update_tri_layer_state(state, LAYER_NAVIGATION, LAYER_NUMERAL, LAYER_HUNGARIAN);
-    return state;
-}
-
 #endif // POINTING_DEVICE_ENABLE
 
 #ifdef RGB_MATRIX_ENABLE
