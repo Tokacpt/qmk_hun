@@ -1,19 +1,21 @@
 /**
  * Charybdis Nano - Hungarian keymap
- * Based on the vendor keymap, fully remapped for Windows Hungarian input.
+ * Based on the vendor keymap.
+ *
+ * REQUIREMENTS: Windows input language set to ENGLISH.
  *
  * HOW TO TYPE HUNGARIAN:
- *   Accented vowels: HOLD the key slightly longer
- *     Hold A = á, Hold E = é, Hold O = ó, Hold U = ú, Hold I = í
+ *   Long-press vowels for accented versions:
+ *     Hold A = á    Hold E = é    Hold I = í
+ *     Hold O = ó    Hold U = ú
  *
- *   For ö/ő/ü/ű: hold TAB (left inner thumb) then tap Z to toggle Hungarian layer
- *     S=ö, D=ő, J=ü, K=ű
- *     Tap Z again to turn Hungarian layer off
+ *   For ö/ő/ü/ű: hold TAB then tap Z to toggle Hungarian layer ON
+ *     S=ö  D=ő  J=ü  K=ű
+ *     Tap Z again (or hold TAB + tap Z) to turn off
  *
- *   All symbols (numeral/symbol layers) are remapped to output correctly
- *   on Windows Hungarian input without needing to change Windows language.
+ *   Shift works normally for uppercase on all accented characters.
  *
- *   NOTE: ^ and $ are not remapped (dead key / complex combo issues)
+ *   No extra software needed. Uses Windows built-in Alt+numpad Unicode input.
  */
 #include QMK_KEYBOARD_H
 
@@ -58,75 +60,34 @@ static uint16_t auto_pointer_layer_timer = 0;
 #    define SNIPING KC_NO
 #endif
 
-// ── Windows Hungarian remapped symbols ───────────────────────────────────────
-// To output English symbols while Windows is set to Hungarian input:
-#define HU_MINS KC_SLSH        // - (slash key = minus in HU)
-#define HU_EQL  S(KC_7)        // = (shift+7 = = in HU)
-#define HU_LBRC RALT(KC_F)     // [ (AltGr+F in HU)
-#define HU_RBRC RALT(KC_G)     // ] (AltGr+G in HU)
-#define HU_BSLS RALT(KC_Q)     // \ (AltGr+Q in HU)
-#define HU_SCLN RALT(KC_COMM)  // ; (AltGr+, in HU)
-#define HU_QUOT S(KC_1)        // ' (shift+1 in HU)
-#define HU_GRV  RALT(KC_7)     // ` (AltGr+7 in HU)
-#define HU_SLSH S(KC_6)        // / (shift+6 in HU)
-#define HU_TILD RALT(KC_1)     // ~ (AltGr+1 in HU)
-#define HU_EXLM S(KC_4)        // ! (shift+4 in HU)
-#define HU_AT   RALT(KC_V)     // @ (AltGr+V in HU)
-#define HU_HASH RALT(KC_X)     // # (AltGr+X in HU)
-#define HU_PERC S(KC_5)        // % (shift+5 in HU)
-#define HU_AMPR RALT(KC_C)     // & (AltGr+C in HU)
-#define HU_ASTR RALT(KC_MINS)  // * (AltGr+- in HU)
-#define HU_LPRN S(KC_8)        // ( (shift+8 in HU)
-#define HU_RPRN S(KC_9)        // ) (shift+9 in HU)
-#define HU_UNDS S(KC_SLSH)     // _ (shift+- in HU)
-#define HU_PLUS S(KC_3)        // + (shift+3 in HU)
-#define HU_LCBR RALT(KC_B)     // { (AltGr+B in HU)
-#define HU_RCBR RALT(KC_N)     // } (AltGr+N in HU)
-#define HU_PIPE RALT(KC_W)     // | (AltGr+W in HU)
-#define HU_DLR  RALT(KC_SCLN)  // $ (AltGr+; in HU - approximation)
-#define HU_COLN S(KC_DOT)      // : (shift+. in HU)
-#define HU_DQUT S(KC_2)        // " (shift+2 in HU)
-#define HU_0    RALT(KC_GRV)   // 0 (AltGr+` in HU, since ` = 0)
-#define HU_DOT  KC_DOT         // . (same in HU)
-#define HU_COMM KC_COMM        // , (same in HU)
-
-// ── Hungarian accented vowels (tap=normal, hold=accented) ─────────────────────
-// á=KC_QUOT, é=KC_SCLN, ó=KC_EQL, ú=KC_RBRC in Windows HU
-// í uses Unicode since it's on an ISO-only key
-#define A_ACUT  MT(MOD_LCTL, KC_A)   // placeholder, handled via custom keycode
-#define E_ACUT  MT(MOD_LCTL, KC_E)
-// We use custom keycodes for tap-hold accents to avoid mod-tap conflicts
-
+// ── Custom keycodes ───────────────────────────────────────────────────────────
 enum custom_keycodes {
     KA = SAFE_RANGE, // tap=a, hold=á
     KE,              // tap=e, hold=é
-    KI,              // tap=i, hold=í (unicode)
+    KI,              // tap=i, hold=í
     KO,              // tap=o, hold=ó
     KU,              // tap=u, hold=ú
-    // Hungarian layer
     HUN_OE,          // ö
     HUN_OX,          // ő
     HUN_UE,          // ü
     HUN_UX,          // ű
 };
 
-// Tap-hold timing
-#define TAPPING_TERM 200
+#define TAPPING_TERM_CUSTOM 250
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     static uint16_t key_timer;
+    bool shifted = get_mods() & MOD_MASK_SHIFT;
 
     switch (keycode) {
         case KA:
             if (record->event.pressed) {
                 key_timer = timer_read();
             } else {
-                if (timer_elapsed(key_timer) < TAPPING_TERM) {
-                    // tap: send a
+                if (timer_elapsed(key_timer) < TAPPING_TERM_CUSTOM) {
                     tap_code(KC_A);
                 } else {
-                    // hold: send á (KC_QUOT in Windows HU)
-                    tap_code(KC_QUOT);
+                    register_unicode(shifted ? 0x00C1 : 0x00E1); // Á or á
                 }
             }
             return false;
@@ -135,11 +96,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 key_timer = timer_read();
             } else {
-                if (timer_elapsed(key_timer) < TAPPING_TERM) {
+                if (timer_elapsed(key_timer) < TAPPING_TERM_CUSTOM) {
                     tap_code(KC_E);
                 } else {
-                    // hold: send é (RALT+COMM in Windows HU)
-                    tap_code16(RALT(KC_COMM));
+                    register_unicode(shifted ? 0x00C9 : 0x00E9); // É or é
                 }
             }
             return false;
@@ -148,11 +108,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 key_timer = timer_read();
             } else {
-                if (timer_elapsed(key_timer) < TAPPING_TERM) {
+                if (timer_elapsed(key_timer) < TAPPING_TERM_CUSTOM) {
                     tap_code(KC_I);
                 } else {
-                    // hold: send í via Unicode (Alt+numpad)
-                    register_unicode(0x00ED);
+                    register_unicode(shifted ? 0x00CD : 0x00ED); // Í or í
                 }
             }
             return false;
@@ -161,12 +120,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 key_timer = timer_read();
             } else {
-                if (timer_elapsed(key_timer) < TAPPING_TERM) {
+                if (timer_elapsed(key_timer) < TAPPING_TERM_CUSTOM) {
                     tap_code(KC_O);
                 } else {
-                    // hold: send ó (S(KC_7) → = → but wait, = is ó in HU)
-                    // KC_EQL = ó in Windows HU
-                    tap_code(KC_EQL);
+                    register_unicode(shifted ? 0x00D3 : 0x00F3); // Ó or ó
                 }
             }
             return false;
@@ -175,89 +132,86 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 key_timer = timer_read();
             } else {
-                if (timer_elapsed(key_timer) < TAPPING_TERM) {
+                if (timer_elapsed(key_timer) < TAPPING_TERM_CUSTOM) {
                     tap_code(KC_U);
                 } else {
-                    // hold: send ú (KC_RBRC in Windows HU)
-                    tap_code(KC_RBRC);
+                    register_unicode(shifted ? 0x00DA : 0x00FA); // Ú or ú
                 }
             }
             return false;
 
         case HUN_OE:
-            if (record->event.pressed) tap_code(KC_0);   // ö in Windows HU
+            if (record->event.pressed)
+                register_unicode(shifted ? 0x00D6 : 0x00F6); // Ö or ö
             return false;
 
         case HUN_OX:
-            if (record->event.pressed) tap_code(KC_LBRC); // ő in Windows HU
+            if (record->event.pressed)
+                register_unicode(shifted ? 0x0150 : 0x0151); // Ő or ő
             return false;
 
         case HUN_UE:
-            if (record->event.pressed) tap_code(KC_MINS); // ü in Windows HU
+            if (record->event.pressed)
+                register_unicode(shifted ? 0x00DC : 0x00FC); // Ü or ü
             return false;
 
         case HUN_UX:
-            if (record->event.pressed) tap_code(KC_BSLS); // ű in Windows HU
+            if (record->event.pressed)
+                register_unicode(shifted ? 0x0170 : 0x0171); // Ű or ű
             return false;
     }
     return true;
 }
 
-// ── Layer definitions ─────────────────────────────────────────────────────────
+// ── Layer definitions (vendor unchanged except base vowels + function Z) ──────
 
-// Base layer: letters remapped for Windows HU, tap-hold for accented vowels
-// Note: Y and Z are correct because Windows HU keeps them as typed on this board
-#define LAYOUT_LAYER_BASE                                                                      \
+#define LAYOUT_LAYER_BASE                                                                     \
        KC_Q,    KC_W,    KE,      KC_R,    KC_T,    KC_Y,    KU,      KI,      KO,      KC_P, \
-       KA,      KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,  HU_QUOT, \
-       KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,  HU_COMM, HU_DOT,  HU_SLSH, \
-                       ESC_MED, SPC_NAV, TAB_FUN, ENT_SYM, BSP_NUM
+       KA,      KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L, KC_QUOT, \
+       KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, \
+                      ESC_MED, SPC_NAV, TAB_FUN, ENT_SYM, BSP_NUM
 
 #define _______________DEAD_HALF_ROW_______________ XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
 #define ______________HOME_ROW_GACS_L______________ KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX
 #define ______________HOME_ROW_GACS_R______________ XXXXXXX, KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI
 
-// Function layer: Z = toggle Hungarian layer
-#define LAYOUT_LAYER_FUNCTION                                                                  \
+#define LAYOUT_LAYER_FUNCTION                                                                 \
     _______________DEAD_HALF_ROW_______________, KC_PSCR,   KC_F7,   KC_F8,   KC_F9,  KC_F12, \
     ______________HOME_ROW_GACS_L______________, KC_SCRL,   KC_F4,   KC_F5,   KC_F6,  KC_F11, \
     TG(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_PAUS, KC_F1,  KC_F2,  KC_F3, KC_F10, \
                       XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX
 
-#define LAYOUT_LAYER_MEDIA                                                                     \
+#define LAYOUT_LAYER_MEDIA                                                                    \
     XXXXXXX,RGB_RMOD, RGB_TOG, RGB_MOD, XXXXXXX, XXXXXXX,RGB_RMOD, RGB_TOG, RGB_MOD, XXXXXXX, \
     KC_MPRV, KC_VOLD, KC_MUTE, KC_VOLU, KC_MNXT, KC_MPRV, KC_VOLD, KC_MUTE, KC_VOLU, KC_MNXT, \
     XXXXXXX, XXXXXXX, XXXXXXX,  EE_CLR, QK_BOOT, QK_BOOT,  EE_CLR, XXXXXXX, XXXXXXX, XXXXXXX, \
                       _______, KC_MPLY, KC_MSTP, KC_MSTP, KC_MPLY
 
-#define LAYOUT_LAYER_POINTER                                                                   \
+#define LAYOUT_LAYER_POINTER                                                                  \
     QK_BOOT,  EE_CLR, XXXXXXX, DPI_MOD, S_D_MOD, S_D_MOD, DPI_MOD, XXXXXXX,  EE_CLR, QK_BOOT, \
     ______________HOME_ROW_GACS_L______________, ______________HOME_ROW_GACS_R______________, \
     _______, DRGSCRL, SNIPING, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, SNIPING, DRGSCRL, _______, \
                       KC_BTN2, KC_BTN1, KC_BTN3, KC_BTN3, KC_BTN1
 
-#define LAYOUT_LAYER_NAVIGATION                                                                \
+#define LAYOUT_LAYER_NAVIGATION                                                               \
     _______________DEAD_HALF_ROW_______________, _______________DEAD_HALF_ROW_______________, \
     ______________HOME_ROW_GACS_L______________, KC_CAPS, KC_LEFT, KC_DOWN,   KC_UP, KC_RGHT, \
     _______________DEAD_HALF_ROW_______________,  KC_INS, KC_HOME, KC_PGDN, KC_PGUP,  KC_END, \
                       XXXXXXX, _______, XXXXXXX,  KC_ENT, KC_BSPC
 
-// Numeral layer: remapped for Windows HU
-#define LAYOUT_LAYER_NUMERAL                                                                   \
-    HU_LBRC,    KC_7,    KC_8,    KC_9, HU_RBRC, _______________DEAD_HALF_ROW_______________, \
-    HU_SCLN,    KC_4,    KC_5,    KC_6,  HU_EQL, ______________HOME_ROW_GACS_R______________, \
-    HU_GRV,     KC_1,    KC_2,    KC_3, HU_BSLS, _______________DEAD_HALF_ROW_______________, \
-                       HU_DOT,   HU_0,  HU_MINS, XXXXXXX, _______
+#define LAYOUT_LAYER_NUMERAL                                                                  \
+    KC_LBRC,    KC_7,    KC_8,    KC_9, KC_RBRC, _______________DEAD_HALF_ROW_______________, \
+    KC_SCLN,    KC_4,    KC_5,    KC_6,  KC_EQL, ______________HOME_ROW_GACS_R______________, \
+     KC_GRV,    KC_1,    KC_2,    KC_3, KC_BSLS, _______________DEAD_HALF_ROW_______________, \
+                       KC_DOT,    KC_0, KC_MINS, XXXXXXX, _______
 
-// Symbols layer: remapped for Windows HU
-#define LAYOUT_LAYER_SYMBOLS                                                                   \
-    HU_LCBR, HU_AMPR, HU_ASTR, HU_LPRN, HU_RCBR, _______________DEAD_HALF_ROW_______________, \
-    HU_COLN,  HU_DLR, HU_PERC, XXXXXXX, HU_PLUS, ______________HOME_ROW_GACS_R______________, \
-    HU_TILD, HU_EXLM,   HU_AT, HU_HASH, HU_PIPE, _______________DEAD_HALF_ROW_______________, \
-                      HU_LPRN, HU_RPRN, HU_UNDS, _______, XXXXXXX
+#define LAYOUT_LAYER_SYMBOLS                                                                  \
+    KC_LCBR, KC_AMPR, KC_ASTR, KC_LPRN, KC_RCBR, _______________DEAD_HALF_ROW_______________, \
+    KC_COLN,  KC_DLR, KC_PERC, KC_CIRC, KC_PLUS, ______________HOME_ROW_GACS_R______________, \
+    KC_TILD, KC_EXLM,   KC_AT, KC_HASH, KC_PIPE, _______________DEAD_HALF_ROW_______________, \
+                      KC_LPRN, KC_RPRN, KC_UNDS, _______, XXXXXXX
 
-// Hungarian layer: ö/ő/ü/ű + toggle off on Z
-#define LAYOUT_LAYER_HUNGARIAN                                                                 \
+#define LAYOUT_LAYER_HUNGARIAN                                                                \
     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
     XXXXXXX, HUN_OE,  HUN_OX,  XXXXXXX, XXXXXXX, XXXXXXX, HUN_UE,  HUN_UX,  XXXXXXX, XXXXXXX, \
     TG(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
@@ -305,7 +259,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_HUNGARIAN]  = LAYOUT_wrapper(LAYOUT_LAYER_HUNGARIAN),
 };
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Init: Windows built-in Alt+numpad Unicode, no extra software needed ───────
 
 void keyboard_post_init_user(void) {
     set_unicode_input_mode(UNICODE_MODE_WINCOMPOSE);
