@@ -4,14 +4,15 @@
  *
  * HOW TO TYPE HUNGARIAN:
  *   Hold TAB (left inner thumb) to enter Function layer
- *   Then hold Z (bottom left) to activate Hungarian layer
- *   Then tap:
+ *   Tap Z to toggle Hungarian layer ON/OFF
+ *
+ *   Hungarian layer keys (Windows must be set to Hungarian input):
  *     A=á, E=é, I=í, O=ó, U=ú
  *     S=ö, D=ő, J=ü, K=ű
  *     Shift + same = uppercase (Á, É, Í, Ó, Ú, Ö, Ő, Ü, Ű)
- *     B = UC_NEXT (cycle Unicode mode: Windows → Linux → macOS)
  *
- *   On Windows: WinCompose must be running (set it to start with Windows).
+ *   í/Í uses Unicode fallback (UNICODE_MODE_WIN = Alt+numpad, no extra software needed)
+ *   All other Hungarian chars use native Windows Hungarian keycodes (no software needed)
  */
 #include QMK_KEYBOARD_H
 
@@ -56,32 +57,25 @@ static uint16_t auto_pointer_layer_timer = 0;
 #    define SNIPING KC_NO
 #endif
 
-// ── Hungarian custom keycodes ─────────────────────────────────────────────────
+// í and Í use Unicode (Alt+numpad) since they're on ISO-only keys
+// All other Hungarian chars use native Windows Hungarian keycodes
 enum custom_keycodes {
-    HUN_A = SAFE_RANGE,  // á / Á
-    HUN_E,               // é / É
-    HUN_I,               // í / Í
-    HUN_O,               // ó / Ó
-    HUN_OE,              // ö / Ö
-    HUN_OX,              // ő / Ő
-    HUN_U,               // ú / Ú
-    HUN_UE,              // ü / Ü
-    HUN_UX,              // ű / Ű
+    HUN_I = SAFE_RANGE,  // í / Í
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) return true;
     bool shifted = get_mods() & MOD_MASK_SHIFT;
     switch (keycode) {
-        case HUN_A:  register_unicode(shifted ? 0x00C1 : 0x00E1); return false;
-        case HUN_E:  register_unicode(shifted ? 0x00C9 : 0x00E9); return false;
-        case HUN_I:  register_unicode(shifted ? 0x00CD : 0x00ED); return false;
-        case HUN_O:  register_unicode(shifted ? 0x00D3 : 0x00F3); return false;
-        case HUN_OE: register_unicode(shifted ? 0x00D6 : 0x00F6); return false;
-        case HUN_OX: register_unicode(shifted ? 0x0150 : 0x0151); return false;
-        case HUN_U:  register_unicode(shifted ? 0x00DA : 0x00FA); return false;
-        case HUN_UE: register_unicode(shifted ? 0x00DC : 0x00FC); return false;
-        case HUN_UX: register_unicode(shifted ? 0x0170 : 0x0171); return false;
+        case HUN_I:
+            if (shifted) {
+                unregister_mods(MOD_MASK_SHIFT);
+                register_unicode(0x00CD); // Í
+                register_mods(MOD_MASK_SHIFT);
+            } else {
+                register_unicode(0x00ED); // í
+            }
+            return false;
     }
     return true;
 }
@@ -98,11 +92,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define ______________HOME_ROW_GACS_L______________ KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX
 #define ______________HOME_ROW_GACS_R______________ XXXXXXX, KC_LSFT, KC_LCTL, KC_LALT, KC_LGUI
 
-// Z position (bottom left) = MO(LAYER_HUNGARIAN)
+// Z = TG(LAYER_HUNGARIAN) toggle
 #define LAYOUT_LAYER_FUNCTION                                                                 \
     _______________DEAD_HALF_ROW_______________, KC_PSCR,   KC_F7,   KC_F8,   KC_F9,  KC_F12, \
     ______________HOME_ROW_GACS_L______________, KC_SCRL,   KC_F4,   KC_F5,   KC_F6,  KC_F11, \
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, TG(LAYER_HUNGARIAN), KC_PAUS, KC_F1,  KC_F2,  KC_F3,  KC_F10, \
+    TG(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_PAUS, KC_F1,  KC_F2,  KC_F3, KC_F10, \
                       XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX
 
 #define LAYOUT_LAYER_MEDIA                                                                    \
@@ -135,10 +129,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     KC_TILD, KC_EXLM,   KC_AT, KC_HASH, KC_PIPE, _______________DEAD_HALF_ROW_______________, \
                       KC_LPRN, KC_RPRN, KC_UNDS, _______, XXXXXXX
 
+// Hungarian layer - native keycodes for Windows Hungarian layout
+// A=á  E=é  I=í(unicode)  O=ó  U=ú
+// S=ö  D=ő  J=ü           K=ű
+// Shift works normally for uppercase on all except I (handled in process_record)
 #define LAYOUT_LAYER_HUNGARIAN                                                                \
-    XXXXXXX, XXXXXXX,  HUN_E, XXXXXXX, XXXXXXX, XXXXXXX,  HUN_U,  HUN_I,  HUN_O, XXXXXXX,  \
-     HUN_A,  HUN_OE,  HUN_OX, XXXXXXX, XXXXXXX, XXXXXXX, HUN_UE, HUN_UX, XXXXXXX, XXXXXXX, \
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, UC_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
+    XXXXXXX, XXXXXXX,  HUN_I, XXXXXXX, XXXXXXX, XXXXXXX, KC_RBRC,  HUN_I,  KC_EQL, XXXXXXX, \
+    KC_QUOT,  KC_0,  KC_LBRC, XXXXXXX, XXXXXXX, XXXXXXX, KC_MINS, KC_BSLS, XXXXXXX, XXXXXXX, \
+    TG(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, \
                       _______, _______, _______, _______, _______
 
 // ── Home row mod and pointer mod macros ──────────────────────────────────────
@@ -186,7 +184,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 void keyboard_post_init_user(void) {
-    set_unicode_input_mode(UNICODE_MODE_WINCOMPOSE);
+    set_unicode_input_mode(UNICODE_MODE_WIN);
 }
 
 // ── Pointing device ───────────────────────────────────────────────────────────
