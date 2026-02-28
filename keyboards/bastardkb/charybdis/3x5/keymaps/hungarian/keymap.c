@@ -102,7 +102,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 #define LAYOUT_LAYER_FUNCTION                                                                 \
     _______________DEAD_HALF_ROW_______________, KC_PSCR,   KC_F7,   KC_F8,   KC_F9,  KC_F12, \
     ______________HOME_ROW_GACS_L______________, KC_SCRL,   KC_F4,   KC_F5,   KC_F6,  KC_F11, \
-    MO(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, KC_PAUS, KC_F1,  KC_F2,   KC_F3,  KC_F10, \
+    MO(LAYER_HUNGARIAN), XXXXXXX, XXXXXXX, XXXXXXX, KC_PAUS, KC_F1,  KC_F2,   KC_F3,   KC_F10, XXXXXXX, \
                       XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX
 
 #define LAYOUT_LAYER_MEDIA                                                                    \
